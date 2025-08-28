@@ -1,12 +1,8 @@
 services:
   totp-service:
     image: follaburros420/oauth-google:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: python totp_service.py
     environment:
-      TOTP_SECRET: "2manb6fhfhdu4vnzisiplj2tyjvo5hqz"
-      WEBHOOKS: "https://webhook.aprenderia.site/webhook/8a099282-cfb9-4cbe-bd31-fd31a4439ece,https://appn8n.aprenderia.site/webhook-test/8a099282-cfb9-4cbe-bd31a4439ece"
-      TIME_WINDOW_MINUTES: "5"
-      SLEEP_BETWEEN_BLOCKS: "2"
+      TOTP_SECRET: 2manb6fhfhdu4vnzisiplj2tyjvo5hqz
+      WEBHOOKS: https://webhook.aprenderia.site/webhook/8a099282-cfb9-4cbe-bd31-fd31a4439ece,https://appn8n.aprenderia.site/webhook-test/8a099282-cfb9-4cbe-bd31a4439ece
+      TIME_WINDOW_MINUTES: 5
+      SLEEP_BETWEEN_BLOCKS: 2

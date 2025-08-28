@@ -1,13 +1,17 @@
-FROM python:3.13-slim
+# Imagen base de Python
+FROM python:3.11-slim
 
-# Crear directorio de trabajo
+# Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar dependencias y código
-COPY totp_service.py /app/
+# Copiar requirements si existiera
+# RUN pip install --no-cache-dir -r requirements.txt
 
 # Instalar dependencias necesarias
-RUN pip install --no-cache-dir pyotp requests
+RUN pip install pyotp requests
+
+# Copiar el código de la aplicación
+COPY totp_service.py .
 
 # Comando por defecto
 CMD ["python", "totp_service.py"]

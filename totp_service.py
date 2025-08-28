@@ -1,39 +1,43 @@
-import pyotp
-import datetime
 import base64
-import requests
-import time
+import datetime
+import logging
 import os
 import sys
+import time
+
+import pyotp
+import requests
 
 # ==============================
-# CONFIGURACIÓN
+# CONFIGURACION
 # ==============================
 SECRET = os.getenv("TOTP_SECRET", "").strip()
 WEBHOOKS = os.getenv("WEBHOOKS", "").split(",")
 TIME_WINDOW_MINUTES = int(os.getenv("TIME_WINDOW_MINUTES", "5"))
 SLEEP_BETWEEN_BLOCKS = int(os.getenv("SLEEP_BETWEEN_BLOCKS", "2"))
 
+
 # ==============================
-# VALIDACIÓN DE CONFIGURACIÓN
+# VALIDACION DE CONFIGURACION
 # ==============================
 def validar_config():
     if not SECRET:
-        print("❌ Error: No se definió la variable de entorno TOTP_SECRET")
+        logging.error("Config error: falta TOTP_SECRET")
         sys.exit(1)
     try:
         base64.b32decode(SECRET, casefold=True)
     except Exception:
-        print("❌ Error: La clave no es válida en formato Base32.")
+        logging.error("Config error: TOTP_SECRET no es Base32 valido")
         sys.exit(1)
     if not WEBHOOKS or WEBHOOKS == [""]:
-        print("❌ Error: No se definieron URLs en la variable de entorno WEBHOOKS")
+        logging.error("Config error: falta WEBHOOKS")
         sys.exit(1)
 
+
 # ==============================
-# GENERADOR DE CÓDIGOS
+# GENERADOR DE CODIGOS
 # ==============================
-def generar_codigos(secret, window_minutes=5):
+def generar_codigos(secret: str, window_minutes: int = 5):
     totp = pyotp.TOTP(secret)
     ahora = datetime.datetime.now()
     timestamp_actual = int(ahora.timestamp())
@@ -49,6 +53,7 @@ def generar_codigos(secret, window_minutes=5):
 
     return codigos
 
+
 # ==============================
 # NOTIFICADOR DE WEBHOOKS
 # ==============================
@@ -57,25 +62,38 @@ def notificar_webhooks(codigos):
         bloque = codigos[i:i+5]
         payload = {
             "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "codes": [{"time": t, "code": c} for t, c in bloque]
+            "codes": [{"time": t, "code": c} for t, c in bloque],
         }
         for url in WEBHOOKS:
             try:
                 r = requests.post(url.strip(), json=payload, timeout=10)
-                print(f"Enviado a {url.strip()} -> {r.status_code}")
+                logging.info("Enviado a %s -> %s", url.strip(), r.status_code)
             except Exception as e:
-                print(f"Error enviando a {url.strip()}: {e}")
+                logging.warning("Error enviando a %s: %s", url.strip(), e)
         time.sleep(SLEEP_BETWEEN_BLOCKS)
+
 
 # ==============================
 # MAIN
 # ==============================
 if __name__ == "__main__":
+    # Configurar logging a stdout
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
     validar_config()
-    print("✅ Servicio TOTP iniciado...")
+    logging.info("Servicio TOTP iniciado")
 
     while True:
-        codigos = generar_codigos(SECRET, TIME_WINDOW_MINUTES)
-        print(f"Generados {len(codigos)} códigos a las {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        notificar_webhooks(codigos)
+        try:
+            codigos = generar_codigos(SECRET, TIME_WINDOW_MINUTES)
+            logging.info(
+                "Generados %d codigos a las %s",
+                len(codigos),
+                datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+            notificar_webhooks(codigos)
+        except Exception:
+            logging.exception("Fallo en ciclo principal")
+            time.sleep(5)
         time.sleep(TIME_WINDOW_MINUTES * 60)
+

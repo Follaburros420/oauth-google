@@ -1,25 +1,13 @@
-version: '3.8'
-
+version: "3.8"
 services:
-  totp-generator:
-    build: .
-    container_name: google-totp-generator
-    ports:
-      - "3000:3000"
+  totp-service:
+    image: python:3.13-slim
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: python totp_service.py
     environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - GOOGLE_TOTP_SECRET=2manb6fhfhdu4vnzisiplj2tyjvo5hqz
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    networks:
-      - totp-network
-
-networks:
-  totp-network:
-    driver: bridge
+      TOTP_SECRET: "2manb6fhfhdu4vnzisiplj2tyjvo5hqz"
+      WEBHOOKS: "https://webhook.aprenderia.site/webhook/8a099282-cfb9-4cbe-bd31-fd31a4439ece,https://appn8n.aprenderia.site/webhook-test/8a099282-cfb9-4cbe-bd31a4439ece"
+      TIME_WINDOW_MINUTES: "5"
+      SLEEP_BETWEEN_BLOCKS: "2"

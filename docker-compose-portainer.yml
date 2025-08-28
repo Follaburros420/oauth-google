@@ -1,6 +1,9 @@
 services:
   totp-service:
-    build: .
+    image: follaburros420/oauth-google:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: python totp_service.py
     environment:
       TOTP_SECRET: "2manb6fhfhdu4vnzisiplj2tyjvo5hqz"

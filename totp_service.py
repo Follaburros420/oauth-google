@@ -73,5 +73,9 @@ def notificar_webhooks(codigos):
 if __name__ == "__main__":
     validar_config()
     print("✅ Servicio TOTP iniciado...")
-    codigos = generar_codigos(SECRET, TIME_WINDOW_MINUTES)
-    notificar_webhooks(codigos)
+
+    while True:
+        codigos = generar_codigos(SECRET, TIME_WINDOW_MINUTES)
+        print(f"Generados {len(codigos)} códigos a las {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        notificar_webhooks(codigos)
+        time.sleep(TIME_WINDOW_MINUTES * 60)
